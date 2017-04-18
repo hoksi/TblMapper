@@ -1,6 +1,7 @@
 {
     "name": "hoksi/tbl-mapper",
     "description": "Description of project TblMapper.",
+    "license": "MIT",
     "authors": [
         {
             "name": "hoksi",
