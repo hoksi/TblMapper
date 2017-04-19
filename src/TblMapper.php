@@ -1,4 +1,6 @@
 <?php
+namespace hoksi;
+
 /**
  * Description of TblMapper
  *
