@@ -1,9 +1,12 @@
 <?php
 
-namespace hoksi;
+namespace Hoksi;
+
+if (!defined('BASEPATH'))
+    exit('No direct script access allowed');
 
 /**
- * Description of TblMapper
+ * Codeigniter4 Query builder Mapper
  *
  * @author hoksi(hoksi2k@hanmail.net)
  */
@@ -107,7 +110,7 @@ class TblMapper {
      * 
      * @var array
      */
-    protected $_orderBy = array();
+    public $_orderBy = array();
 
     /**
      * set data
@@ -138,12 +141,28 @@ class TblMapper {
     public function __construct($tableName = null) {
         $this->ci = & get_instance();
 
-        $this->rodb = & $this->ci->db;
-        $this->rwdb = & $this->ci->db;
+        if(isset($this->ci->db) && is_object($this->ci->db)) {
+            $this->rodb = & $this->ci->db;
+            $this->rwdb = & $this->ci->db;
+        } else {
+            throw new \Exception('Database Not Connected!');
+        }
 
         if ($tableName != null) {
             $this->table($tableName);
         }
+    }
+
+    /**
+     * Set resultType
+     * 
+     * @param string $resultType
+     * @return $this
+     */
+    public function setResultType($resultType) {
+        $this->resultType = ($resultType == 'object' ? $resultType : 'array');
+
+        return $this;
     }
 
     /**
@@ -240,6 +259,17 @@ class TblMapper {
         $this->resetSelect();
 
         return $this->resultType == 'object' ? $query->result() : $query->result_array();
+    }
+
+    /**
+     * Get one row
+     * 
+     * @return mixed
+     */
+    public function getOne() {
+        $row = $this->get(1);
+
+        return isset($row[0]) ? $row[0] : false;
     }
 
     /**
