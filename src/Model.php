@@ -1,14 +1,14 @@
 <?php
 
-namespace Hoksi;
+namespace hoksi;
+
+use hoksi;
 
 /**
  * Model
  *
- * @author dcg
+ * @author Hoksi (hoksi2k@hanmail.net)
  */
-use hoksi;
-
 class Model {
 
     /**

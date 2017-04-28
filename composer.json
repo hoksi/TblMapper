@@ -1,6 +1,6 @@
 {
     "name": "hoksi/tbl-mapper",
-    "description": "Description of project TblMapper.",
+    "description": "CI4 query builder wrapper for Codeigniter 3 developers.",
     "license": "MIT",
     "authors": [
         {

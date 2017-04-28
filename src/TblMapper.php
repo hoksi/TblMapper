@@ -1,6 +1,6 @@
 <?php
 
-namespace Hoksi;
+namespace hoksi;
 
 if (!defined('BASEPATH'))
     exit('No direct script access allowed');
