@@ -167,7 +167,7 @@ class Model {
         $this->tempReturnType = $this->returnType;
         $this->tempUseSoftDeletes = $this->useSoftDeletes;
 
-        if (is_null($validation)) {
+        if (!isset($validateion) || is_null($validation)) {
             // $validation = \Config\Services::validation();
             $validation = new \stdClass();
         }
@@ -342,7 +342,7 @@ class Model {
      */
     public function withDeleted($val = true) {
         $this->tempUseSoftDeletes = !$val;
-
+        
         return $this;
     }
 
@@ -882,6 +882,7 @@ class Model {
         if (empty($result)) {
             return $result;
         }
+        
         if (!$result instanceof TblMapper) {
             return $result;
         }
