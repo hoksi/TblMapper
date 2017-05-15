@@ -2,6 +2,9 @@
 
 namespace hoksi;
 
+if (!defined('BASEPATH'))
+    exit('No direct script access allowed');
+
 use hoksi;
 
 /**
@@ -12,18 +15,19 @@ use hoksi;
 class Model {
 
     /**
+     * Pager instance.
+     * Populated after calling $this->paginate()
+     *
+     * @var Pager
+     */
+    public $pager;
+
+    /**
      * Name of database table
      *
      * @var string
      */
     protected $table;
-
-    /**
-     * Query Builder object
-     *
-     * @var BaseBuilder
-     */
-    protected $builder;
 
     /**
      * The table's primary key.
@@ -50,60 +54,12 @@ class Model {
     protected $useSoftDeletes = false;
 
     /**
-     * Used by asArray and asObject to provide
-     * temporary overrides of model default.
-     *
-     * @var string
-     */
-    protected $tempReturnType;
-
-    /**
-     * Used by withDeleted to override the
-     * model's softDelete setting.
-     *
-     * @var bool
-     */
-    protected $tempUseSoftDeletes;
-
-    /**
-     * Skip the model's validation. Used in conjunction with skipValidation()
-     * to skip data validation for any future calls.
-     *
-     * @var bool
-     */
-    protected $skipValidation = false;
-
-    /**
-     * Our validator instance.
-     *
-     * @var \CodeIgniter\Validation\ValidationInterface
-     */
-    protected $validation;
-
-    /**
-     * Rules used to validate data in insert, update, and save methods.
-     * The array must match the format of data passed to the Validation
-     * library.
-     *
-     * @var array
-     */
-    protected $validationRules = array();
-
-    /**
-     * Whether we should limit fields in inserts
-     * and updates to those available in $allowedFields or not.
-     *
-     * @var bool
-     */
-    protected $protectFields = true;
-
-    /**
      * An array of field names that are allowed
      * to be set by the user in inserts/updates.
      *
      * @var array
      */
-    protected $allowedFields = array('name');
+    protected $allowedFields = array();
 
     /**
      * If true, will set created_at, and updated_at
@@ -112,6 +68,16 @@ class Model {
      * @var bool
      */
     protected $useTimestamps = false;
+
+    /**
+     * The type of column that created_at and updated_at
+     * are expected to.
+     *
+     * Allowed: 'datetime', 'date', 'int'
+     *
+     * @var string
+     */
+    protected $dateFormat = 'datetime';
 
     /**
      * The column used for insert timestampes
@@ -128,14 +94,67 @@ class Model {
     protected $updatedField = 'updated_at';
 
     /**
-     * The type of column that created_at and updated_at
-     * are expected to.
+     * Used by withDeleted to override the
+     * model's softDelete setting.
      *
-     * Allowed: 'datetime', 'date', 'int'
+     * @var bool
+     */
+    protected $tempUseSoftDeletes;
+
+    /**
+     * Used by asArray and asObject to provide
+     * temporary overrides of model default.
      *
      * @var string
      */
-    protected $dateFormat = 'datetime';
+    protected $tempReturnType;
+
+    /**
+     * Whether we should limit fields in inserts
+     * and updates to those available in $allowedFields or not.
+     *
+     * @var bool
+     */
+    protected $protectFields = true;
+
+    /**
+     * Query Builder object
+     *
+     * @var BaseBuilder
+     */
+    protected $builder;
+
+    /**
+     * Rules used to validate data in insert, update, and save methods.
+     * The array must match the format of data passed to the Validation
+     * library.
+     *
+     * @var array
+     */
+    protected $validationRules = array();
+
+    /**
+     * Contains any custom error messages to be
+     * used during data validation.
+     *
+     * @var array|null
+     */
+    protected $validationMessages = null;
+
+    /**
+     * Skip the model's validation. Used in conjunction with skipValidation()
+     * to skip data validation for any future calls.
+     *
+     * @var bool
+     */
+    protected $skipValidation = false;
+
+    /**
+     * Our validator instance.
+     *
+     * @var \CodeIgniter\Validation\ValidationInterface
+     */
+    public $validation;
 
     /**
      * Salt
@@ -143,19 +162,6 @@ class Model {
      * @var string
      */
     protected $salt = '';
-
-    /**
-     * Specify the table associated with a model
-     *
-     * @param string $table
-     *
-     * @return $this
-     */
-    public function setTable($table) {
-        $this->table = $table;
-
-        return $this;
-    }
 
     /**
      * Model constructor
@@ -168,10 +174,41 @@ class Model {
         $this->tempUseSoftDeletes = $this->useSoftDeletes;
 
         if (!isset($validateion) || is_null($validation)) {
-            // $validation = \Config\Services::validation();
-            $validation = new \stdClass();
+            $validation = new Validation();
         }
         $this->validation = $validation;
+    }
+
+    /**
+     * Works with $this->builder to get the Compiled Select to operate on.
+     * Expects a GET variable (?page=2) that specifies the page of results
+     * to display.
+     *
+     * @param int    $perPage
+     * @param string $group    Will be used by the pagination library
+     *                         to identify a unique pagination set.
+     *
+     * @return array|null
+     */
+    public function paginate($perPage = 20, $group = 'default') {
+        static $pager = null;
+
+        if ($pager === null) {
+            // Store it in the Pager library so it can be
+            // paginated in the views.
+            $pager = new \hoksi\Pagination();
+        }
+
+        // Get the necessary parts.
+        $page = $_GET['page'] ? $_GET['page'] : 1;
+
+        $total = $this->getCount(false);
+
+        $this->pager = $pager->store($group, $page, $perPage, $total);
+
+        $offset = ($page - 1) * $perPage;
+
+        return $this->findAll($perPage, $offset);
     }
 
     /**
@@ -342,7 +379,7 @@ class Model {
      */
     public function withDeleted($val = true) {
         $this->tempUseSoftDeletes = !$val;
-        
+
         return $this;
     }
 
@@ -695,6 +732,44 @@ class Model {
     }
 
     /**
+     * Specify the table associated with a model
+     *
+     * @param string $table
+     *
+     * @return $this
+     */
+    public function setTable($table) {
+        $this->table = $table;
+
+        return $this;
+    }
+
+    /**
+     * Grabs the last error(s) that occurred. If data was validated,
+     * it will first check for errors there, otherwise will try to
+     * grab the last error from the Database connection.
+     *
+     * @param bool $forceDB   Always grab the db error, not validation
+     *
+     * @return array|null
+     */
+    public function errors($forceDB = false) {
+        // Do we have validation errors?
+        if ($forceDB === false && $this->skipValidation === false) {
+            $errors = $this->validation->getErrors();
+
+            if (!empty($errors)) {
+                return $errors;
+            }
+        }
+
+        // Still here? Grab the database-specific error, if any.
+        // $error = $this->db->getError();
+
+        return isset($error['message']) && $error['message'] ? $error['message'] : null;
+    }
+
+    /**
      * Sets the return type of the results to be as an associative array.
      */
     public function asArray() {
@@ -871,7 +946,6 @@ class Model {
      */
     public function __call($name, array $params) {
         $result = null;
-
         if (method_exists($this->builder(), $name)) {
             $result = call_user_func_array(array($this->builder(), $name), $params);
         }
@@ -882,7 +956,7 @@ class Model {
         if (empty($result)) {
             return $result;
         }
-        
+
         if (!$result instanceof TblMapper) {
             return $result;
         }

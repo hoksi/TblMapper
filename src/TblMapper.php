@@ -54,7 +54,7 @@ class TblMapper {
      * 
      * @var string 
      */
-    protected $resultType = '';
+    protected $resultType = 'object';
 
     /**
      * Limit
@@ -282,7 +282,7 @@ class TblMapper {
         if ($where !== null) {
             $this->where($where);
         }
-        
+
         return $this->get($limit, $offset);
     }
 
@@ -298,16 +298,12 @@ class TblMapper {
     }
 
     /**
-     * Get
-     *
-     * Compiles the select statement based on the other functions called
-     *
-     * @param    string    the limit clause
-     * @param    string    the offset clause
-     *
-     * @return    mixed
+     * Get Row Count
+     * 
+     * @param boolean $reset
+     * @return int
      */
-    public function getCount() {
+    public function getCount($reset = true) {
         $isAll = !empty($this->_where) && !empty($this->_groupBy);
 
         // Row count mode
@@ -318,7 +314,10 @@ class TblMapper {
 
         $rowCnt = $isAll ? $this->rodb->count_all() : $this->rodb->count_all_results();
         $this->lastQuery = $this->rodb->last_query();
-        $this->resetSelect();
+
+        if ($reset) {
+            $this->resetSelect();
+        }
 
         return $rowCnt;
     }

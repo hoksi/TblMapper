@@ -1,6 +1,6 @@
 <?php
 
-namespace Hoksi;
+namespace hoksi;
 
 if (!defined('BASEPATH'))
     exit('No direct script access allowed');
@@ -29,6 +29,8 @@ if (!defined('BASEPATH'))
 
 /**
  * Codeignter Test Framework Class
+ * 
+ * @author Hoksi (hoksi2k@hanmail.net)
  */
 abstract class Toast extends \CI_Controller {
 
