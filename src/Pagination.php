@@ -27,6 +27,12 @@ class Pagination {
     public $baseUrl;
 
     /**
+     * Pager Group Name
+     * @var string
+     */
+    protected $group;
+
+    /**
      * Pager Group
      * 
      * @var array
@@ -108,6 +114,7 @@ class Pagination {
         $this->currentPage = (isset($this->qryStr['page']) ? intval($this->qryStr['page']) : 1);
         $this->perPage = (isset($this->qryStr['per_page']) ? intval($this->qryStr['per_page']) : 20);
         $this->linkLen = (isset($this->qryStr['link_len']) ? intval($this->qryStr['link_len']) : 14);
+        $this->group = (isset($this->qryStr['group']) ? intval($this->qryStr['group']) : 'default');
         $this->midRange = intval(floor($this->linkLen / 2));
 
         unset($this->qryStr['page']);
@@ -182,6 +189,7 @@ class Pagination {
             'totalPage' => $this->totalPage,
             'pager' => $this->pager,
             'qry_str' => (!empty($this->qryStr) ? http_build_query($this->qryStr) : ''),
+            'url' => $this->baseUrl,
         );
 
         return $this;
@@ -212,8 +220,10 @@ class Pagination {
     public function store($group, $page, $perPage, $total) {
         $this->ensureGroup($group);
 
-        $this->currentPage = $page;
-        $this->perPage = $perPage;
+        if ($page)
+            $this->currentPage = $page;
+        if ($perPage)
+            $this->perPage = $perPage;
 
         $this->setTotal($total, $group);
 
@@ -351,8 +361,7 @@ class Pagination {
     public function hasMore($group = 'default') {
         $this->ensureGroup($group);
 
-        return ($this->currentPage * $this->perPage) < $this->
-    public function links($group = 'total;
+        return ($this->currentPage * $this->perPage) < $this->total;
     }
 
     /**
@@ -362,10 +371,44 @@ class Pagination {
      * @param string $template The output template alias to render.
      *
      * @return string
-     */default', $template = 'default_full') {
+     */
+    public function links($group = 'default', $template = 'default_full') {
         $this->ensureGroup($group);
 
         return $this->displayLinks($group, $template);
+    }
+
+    /**
+     * Creates simple Next/Previous links, instead of full pagination.
+     *
+     * @param string $group
+     * @param string $template
+     *
+     * @return string
+     */
+    public function simpleLinks($group = 'default', $template = 'default_simple') {
+        $this->ensureGroup($group);
+
+        return $this->displayLinks($group, $template);
+    }
+
+    /**
+     * Allows for a simple, manual, form of pagination where all of the data
+     * is provided by the user. The URL is the current URI.
+     *
+     * @param int    $page
+     * @param int    $perPage
+     * @param int    $total
+     * @param string $template The output template alias to render.
+     *
+     * @return string
+     */
+    public function makeLinks($page, $perPage, $total, $template = 'default_full') {
+        $name = time();
+
+        $this->store($name, $page, $perPage, $total);
+
+        return $this->displayLinks($name, $template);
     }
 
     /**
@@ -378,9 +421,9 @@ class Pagination {
      * @return string
      */
     protected function displayLinks($group, $template) {
-        $this->ci->load->vars(array('pager' => $this->pager));
-        
-        $this->ci->load->file(__DIR__ . '/views/pagination/' . $template . '.php');
+        $this->ci->load->vars(array('pager' => new PagerRenderer($this->pager)));
+
+        return $this->ci->load->file(__DIR__ . '/views/pagination/' . $template . '.php', true);
     }
 
 }
