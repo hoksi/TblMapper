@@ -65,10 +65,6 @@ class ExcelWriterXML {
      */
     
     public function __construct($fileName = 'file.xml') {
-        $this->ExcelWriterXML($fileName);
-    }
-    
-    public function ExcelWriterXML($fileName = 'file.xml') {
         // Add default style
         $style = $this->addStyle('Default');
         $style->name('Normal');

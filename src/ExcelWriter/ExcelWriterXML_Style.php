@@ -211,9 +211,7 @@ class ExcelWriterXML_Style {
 	
 	// Public Variables
 	/////////////////////
-	public function __construct($id) {
-		$this->ExcelWriterXML_Style($id);
-	}
+
 	// Constructor
 	
 	/**
@@ -221,7 +219,7 @@ class ExcelWriterXML_Style {
      * @param string $id The named style referenced by Excel.  This is called by
      * ExcelWriterXML object when adding a style
      */
-	public function ExcelWriterXML_Style($id){
+	public function __construct($id){
 		$this->id = $id;
 	}
 	/////////////////////

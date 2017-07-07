@@ -65,10 +65,6 @@ class ExcelWriterXML_Sheet {
      * spreadsheet
      */
     public function __construct($id) {
-        $this->ExcelWriterXML_Sheet($id);
-    }
-
-    public function ExcelWriterXML_Sheet($id) {
         $this->id = $id;
     }
 

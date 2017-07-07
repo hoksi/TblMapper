@@ -55,7 +55,7 @@ class TblMapper {
      * @var string 
      */
     protected $resultType = 'object';
-
+    
     /**
      * Limit
      * 
@@ -222,13 +222,18 @@ class TblMapper {
      *
      * @return mixed
      */
-    public function query($sql, $binds = null) {
+    public function query($sql, $binds = null, $unbuffered = false) {
         $this->lastQuery = $sql;
 
         switch (strtoupper(substr(ltrim($sql), 0, 6))) {
             case 'SELECT':
                 $query = $this->rodb->query($sql, $binds);
-                return $this->resultType == 'array' ? $query->result_array() : $query->result($this->resultType);
+                
+                if($unbuffered) {
+                    return $query;
+                } else {
+                    return $this->resultType == 'array' ? $query->result_array() : $query->result($this->resultType);
+                }
 
             case 'INSERT':
                 $this->wrdb->query($sql, $binds);
@@ -251,7 +256,7 @@ class TblMapper {
      *
      * @return    mixed
      */
-    public function get($limit = null, $offset = null) {
+    public function get($limit = null, $offset = null, $unbuffered = false) {
         // Limit
         if ($limit !== null) {
             $this->limit($limit, $offset);
@@ -264,7 +269,11 @@ class TblMapper {
         $this->lastQuery = $this->rodb->last_query();
         $this->resetSelect();
 
-        return $this->resultType == 'array' ? $query->result_array() : $query->result($this->resultType);
+        if($unbuffered) {
+            return $query;
+        } else {
+            return $this->resultType == 'array' ? $query->result_array() : $query->result($this->resultType);
+        }
     }
 
     /**
@@ -278,12 +287,12 @@ class TblMapper {
      *
      * @return    ResultInterface
      */
-    public function getWhere($where = null, $limit = null, $offset = null) {
+    public function getWhere($where = null, $limit = null, $offset = null, $unbuffered = false) {
         if ($where !== null) {
             $this->where($where);
         }
 
-        return $this->get($limit, $offset);
+        return $this->get($limit, $offset, $unbuffered);
     }
 
     /**
@@ -292,9 +301,13 @@ class TblMapper {
      * @return mixed
      */
     public function getOne() {
-        $row = $this->get(1);
+        $row = $this->get(1, null, false);
 
         return isset($row[0]) ? $row[0] : false;
+    }
+    
+    public function getRow($result) {
+        return $result->unbuffered_row($this->resultType);
     }
 
     /**

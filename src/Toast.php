@@ -43,6 +43,7 @@ abstract class Toast extends \CI_Controller {
     public $asserts;
     public $whiteList;
     public $blackList;
+    public $test = false;
 
     /**
      * Construct
@@ -64,6 +65,7 @@ abstract class Toast extends \CI_Controller {
      * Run All Tests
      */
     public function index() {
+        $this->test = true;
         $this->_show_all();
     }
 
@@ -127,7 +129,7 @@ abstract class Toast extends \CI_Controller {
 
         $test_class_segments = $this->router->directory . strtolower($this->modelname_short);
         $test_method_segments = $test_class_segments . '/' . substr($method, 4);
-        $desc = anchor($test_class_segments, $this->modelname_short) . ' -> ' . anchor($test_method_segments, substr($method, 4));
+        $desc = anchor($test_class_segments, $this->modelname_short) . ' -> ' . anchor($test_method_segments, substr($method, 4)) . ' [' . anchor($test_class_segments . '/' . $method, 'preview') . ']';
 
         $this->messages[] = $this->message;
 
@@ -147,7 +149,7 @@ abstract class Toast extends \CI_Controller {
                 ) {
                     continue;
                 }
-                
+
                 $testMethods[] = $method;
             }
         }
@@ -169,6 +171,7 @@ abstract class Toast extends \CI_Controller {
     public function _remap($method) {
         $test_name = 'test' . $method;
         if (method_exists($this, $test_name)) {
+            $this->test = true;
             $this->_show($test_name);
         } else {
             $this->{$method}();
@@ -214,6 +217,10 @@ abstract class Toast extends \CI_Controller {
             $this->asserts = FALSE;
             return FALSE;
         }
+    }
+
+    protected function isTest() {
+        return $this->test;
     }
 
     public function assertFalse($assertion) {
